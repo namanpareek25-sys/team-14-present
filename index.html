@@ -640,6 +640,18 @@
         padding: 20px;
       }
     }
+
+    /* Loading indicator */
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--accent);
+    }
+
+    .loading i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -737,7 +749,7 @@
           <li><a href="#" class="active" onclick="showTab('overview')"><i class="fas fa-home"></i> Overview</a></li>
           <li><a href="#" onclick="showTab('gases')"><i class="fas fa-wind"></i> Gas Levels</a></li>
           <li><a href="#" onclick="showTab('sound')"><i class="fas fa-volume-up"></i> Sound Analysis</a></li>
-        
+          <li><a href="#" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refresh Data</a></li>
         </ul>
       </div>
       <div class="dashboard-content">
@@ -748,33 +760,33 @@
           
           <div class="cards">
             <div class="dash-card">
-              <i class="fas fa-wind"></i>
-              <h3>Air Quality Index</h3>
-              <div class="value">78</div>
-              <p>Good</p>
-            </div>
-            <div class="dash-card">
-              <i class="fas fa-volume-up"></i>
-              <h3>Noise Level</h3>
-              <div class="value">42 dB</div>
-              <p>Moderate</p>
-            </div>
-            <div class="dash-card">
               <i class="fas fa-temperature-high"></i>
               <h3>Temperature</h3>
-              <div class="value">24°C</div>
-              <p>Normal</p>
+              <div class="value" id="tempValue">--°C</div>
+              <p id="tempStatus">Loading...</p>
             </div>
             <div class="dash-card">
               <i class="fas fa-tint"></i>
               <h3>Humidity</h3>
-              <div class="value">65%</div>
-              <p>Comfortable</p>
+              <div class="value" id="humidityValue">--%</div>
+              <p id="humidityStatus">Loading...</p>
+            </div>
+            <div class="dash-card">
+              <i class="fas fa-wind"></i>
+              <h3>Air Quality Index</h3>
+              <div class="value" id="aqiValue">--</div>
+              <p id="aqiStatus">Calculating...</p>
+            </div>
+            <div class="dash-card">
+              <i class="fas fa-volume-up"></i>
+              <h3>Sound Level</h3>
+              <div class="value" id="soundValue">-- dB</div>
+              <p id="soundStatus">Loading...</p>
             </div>
           </div>
           
           <div class="chart-container">
-            <h3 class="chart-title">Environmental Trends (Last 7 Days)</h3>
+            <h3 class="chart-title">Environmental Trends (Last 8 Readings)</h3>
             <canvas id="trendChart"></canvas>
           </div>
         </div>
@@ -785,38 +797,31 @@
           <p>Real-time monitoring of hazardous gases</p>
           
           <div class="sensor-grid">
-            <div class="sensor-card safe">
+            <div class="sensor-card" id="mq7Card">
               <i class="fas fa-smog"></i>
-              <h3>Carbon Monoxide</h3>
-              <div class="sensor-status">Safe</div>
-              <div class="sensor-value">2.1 ppm</div>
+              <h3>Carbon Monoxide (MQ7)</h3>
+              <div class="sensor-status" id="mq7Status">Loading...</div>
+              <div class="sensor-value" id="mq7Value">-- ppm</div>
               <p>Threshold: 9 ppm</p>
             </div>
-            <div class="sensor-card safe">
+            <div class="sensor-card" id="mq135Card">
               <i class="fas fa-industry"></i>
-              <h3>Carbon Dioxide</h3>
-              <div class="sensor-status">Safe</div>
-              <div class="sensor-value">420 ppm</div>
+              <h3>Carbon Dioxide (MQ135)</h3>
+              <div class="sensor-status" id="mq135Status">Loading...</div>
+              <div class="sensor-value" id="mq135Value">-- ppm</div>
               <p>Threshold: 1000 ppm</p>
             </div>
-            <div class="sensor-card warning">
-              <i class="fas fa-poop"></i>
-              <h3>Nitrogen Dioxide</h3>
-              <div class="sensor-status">Elevated</div>
-              <div class="sensor-value">48 ppb</div>
-              <p>Threshold: 53 ppb</p>
-            </div>
-            <div class="sensor-card safe">
+            <div class="sensor-card" id="mq2Card">
               <i class="fas fa-fire"></i>
-              <h3>Methane</h3>
-              <div class="sensor-status">Safe</div>
-              <div class="sensor-value">1.8 ppm</div>
+              <h3>Methane (MQ2)</h3>
+              <div class="sensor-status" id="mq2Status">Loading...</div>
+              <div class="sensor-value" id="mq2Value">-- ppm</div>
               <p>Threshold: 5 ppm</p>
             </div>
           </div>
           
           <div class="chart-container">
-            <h3 class="chart-title">Gas Concentration Trends</h3>
+            <h3 class="chart-title">Gas Concentration Trends (Last 8 Readings)</h3>
             <canvas id="gasChart"></canvas>
           </div>
         </div>
@@ -829,31 +834,31 @@
           <div class="cards">
             <div class="dash-card">
               <i class="fas fa-volume-down"></i>
-              <h3>Average Noise</h3>
-              <div class="value">42 dB</div>
-              <p>Within limits</p>
+              <h3>Current Sound Level</h3>
+              <div class="value" id="currentSoundValue">-- dB</div>
+              <p id="soundLevelStatus">Loading...</p>
             </div>
             <div class="dash-card">
               <i class="fas fa-volume-up"></i>
-              <h3>Peak Noise</h3>
-              <div class="value">78 dB</div>
-              <p>At 14:32 today</p>
+              <h3>Peak Sound Level</h3>
+              <div class="value" id="peakSoundValue">-- dB</div>
+              <p id="peakSoundStatus">Loading...</p>
             </div>
             <div class="dash-card">
               <i class="fas fa-wave-square"></i>
               <h3>Sound Patterns</h3>
-              <div class="value">12</div>
-              <p>Abnormal today</p>
+              <div class="value" id="soundPatterns">--</div>
+              <p>Detected today</p>
             </div>
           </div>
           
           <div class="chart-container">
-            <h3 class="chart-title">Noise Levels Throughout the Day</h3>
+            <h3 class="chart-title">Sound Level Trends (Last 8 Readings)</h3>
             <canvas id="soundChart"></canvas>
           </div>
         </div>
-        
-       
+      </div>
+    </div>
   </section>
 
   <footer id="about">
@@ -874,11 +879,22 @@
   </footer>
 
   <script>
+    // ThingSpeak Configuration
+    const CHANNEL_ID = '3099195';
+    const READ_API_KEY = '9WQ5FF4EZA7JXKST';
+    const THINGSPEAK_URL = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?api_key=${READ_API_KEY}&results=8`;
+
+    // Global variables to store data
+    let thingSpeakData = null;
+    let trendChart, gasChart, soundChart;
+
     // Login functionality
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
       // Hide the login modal
       document.getElementById('loginModal').classList.add('hidden');
+      // Load data from ThingSpeak
+      fetchThingSpeakData();
       // Scroll directly to dashboard
       document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
     });
@@ -902,26 +918,209 @@
       document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Initialize charts when page loads
-    window.onload = function() {
+    // Fetch data from ThingSpeak
+    async function fetchThingSpeakData() {
+      try {
+        showLoadingState();
+        const response = await fetch(THINGSPEAK_URL);
+        const data = await response.json();
+        thingSpeakData = data;
+        updateDashboard(data);
+        initializeCharts(data);
+      } catch (error) {
+        console.error('Error fetching ThingSpeak data:', error);
+        showErrorState();
+      }
+    }
+
+    // Refresh data
+    function refreshData() {
+      fetchThingSpeakData();
+    }
+
+    // Show loading state
+    function showLoadingState() {
+      document.querySelectorAll('.value, .sensor-value').forEach(el => {
+        el.textContent = '--';
+      });
+      document.querySelectorAll('.sensor-status, p').forEach(el => {
+        if (el.id.includes('Status') || el.textContent.includes('Loading')) {
+          el.textContent = 'Loading...';
+        }
+      });
+    }
+
+    // Show error state
+    function showErrorState() {
+      document.querySelectorAll('.value, .sensor-value').forEach(el => {
+        el.textContent = 'Error';
+      });
+      document.querySelectorAll('.sensor-status, p').forEach(el => {
+        if (el.id.includes('Status') || el.textContent.includes('Loading')) {
+          el.textContent = 'Data unavailable';
+        }
+      });
+    }
+
+    // Update dashboard with ThingSpeak data
+    function updateDashboard(data) {
+      if (!data || !data.feeds || data.feeds.length === 0) {
+        showErrorState();
+        return;
+      }
+
+      // Get the latest reading
+      const latestFeed = data.feeds[data.feeds.length - 1];
+      
+      // Update temperature
+      const temp = parseFloat(latestFeed.field1);
+      if (!isNaN(temp)) {
+        document.getElementById('tempValue').textContent = `${temp.toFixed(1)}°C`;
+        document.getElementById('tempStatus').textContent = getTemperatureStatus(temp);
+      }
+      
+      // Update humidity
+      const humidity = parseFloat(latestFeed.field2);
+      if (!isNaN(humidity)) {
+        document.getElementById('humidityValue').textContent = `${humidity.toFixed(1)}%`;
+        document.getElementById('humidityStatus').textContent = getHumidityStatus(humidity);
+      }
+      
+      // Update MQ7 (Carbon Monoxide)
+      const mq7 = parseFloat(latestFeed.field3);
+      if (!isNaN(mq7)) {
+        document.getElementById('mq7Value').textContent = `${mq7.toFixed(1)} ppm`;
+        const mq7Status = getGasStatus(mq7, 9);
+        document.getElementById('mq7Status').textContent = mq7Status;
+        updateCardStatus('mq7Card', mq7Status);
+      }
+      
+      // Update MQ135 (Carbon Dioxide)
+      const mq135 = parseFloat(latestFeed.field4);
+      if (!isNaN(mq135)) {
+        document.getElementById('mq135Value').textContent = `${mq135.toFixed(1)} ppm`;
+        const mq135Status = getGasStatus(mq135, 1000);
+        document.getElementById('mq135Status').textContent = mq135Status;
+        updateCardStatus('mq135Card', mq135Status);
+      }
+      
+      // Update MQ2 (Methane)
+      const mq2 = parseFloat(latestFeed.field5);
+      if (!isNaN(mq2)) {
+        document.getElementById('mq2Value').textContent = `${mq2.toFixed(1)} ppm`;
+        const mq2Status = getGasStatus(mq2, 5);
+        document.getElementById('mq2Status').textContent = mq2Status;
+        updateCardStatus('mq2Card', mq2Status);
+      }
+      
+      // Update LM393 (Sound)
+      const sound = parseFloat(latestFeed.field6);
+      if (!isNaN(sound)) {
+        document.getElementById('soundValue').textContent = `${sound.toFixed(1)} dB`;
+        document.getElementById('soundStatus').textContent = getSoundStatus(sound);
+        document.getElementById('currentSoundValue').textContent = `${sound.toFixed(1)} dB`;
+        document.getElementById('soundLevelStatus').textContent = getSoundStatus(sound);
+        
+        // Calculate peak sound
+        const peakSound = Math.max(...data.feeds.map(feed => parseFloat(feed.field6)).filter(val => !isNaN(val)));
+        document.getElementById('peakSoundValue').textContent = `${peakSound.toFixed(1)} dB`;
+        document.getElementById('peakSoundStatus').textContent = `Max recorded`;
+        
+        // Calculate sound patterns (simple count of readings above 50dB)
+        const soundPatterns = data.feeds.filter(feed => parseFloat(feed.field6) > 50).length;
+        document.getElementById('soundPatterns').textContent = soundPatterns;
+      }
+      
+      // Calculate Air Quality Index (simplified)
+      const aqi = calculateAQI(mq7, mq135, mq2);
+      document.getElementById('aqiValue').textContent = aqi;
+      document.getElementById('aqiStatus').textContent = getAQIStatus(aqi);
+    }
+
+    // Helper functions for status determination
+    function getTemperatureStatus(temp) {
+      if (temp < 15) return 'Cold';
+      if (temp < 25) return 'Comfortable';
+      if (temp < 30) return 'Warm';
+      return 'Hot';
+    }
+
+    function getHumidityStatus(humidity) {
+      if (humidity < 30) return 'Dry';
+      if (humidity < 60) return 'Comfortable';
+      return 'Humid';
+    }
+
+    function getGasStatus(value, threshold) {
+      if (value < threshold * 0.5) return 'Safe';
+      if (value < threshold * 0.8) return 'Moderate';
+      if (value < threshold) return 'Elevated';
+      return 'Dangerous';
+    }
+
+    function getSoundStatus(sound) {
+      if (sound < 40) return 'Quiet';
+      if (sound < 60) return 'Moderate';
+      if (sound < 80) return 'Loud';
+      return 'Very Loud';
+    }
+
+    function getAQIStatus(aqi) {
+      if (aqi < 50) return 'Good';
+      if (aqi < 100) return 'Moderate';
+      if (aqi < 150) return 'Unhealthy for Sensitive Groups';
+      if (aqi < 200) return 'Unhealthy';
+      if (aqi < 300) return 'Very Unhealthy';
+      return 'Hazardous';
+    }
+
+    function calculateAQI(mq7, mq135, mq2) {
+      // Simplified AQI calculation based on gas concentrations
+      let aqi = 0;
+      if (!isNaN(mq7)) aqi += mq7 * 2;
+      if (!isNaN(mq135)) aqi += mq135 / 10;
+      if (!isNaN(mq2)) aqi += mq2 * 3;
+      return Math.min(Math.round(aqi), 500);
+    }
+
+    function updateCardStatus(cardId, status) {
+      const card = document.getElementById(cardId);
+      card.className = 'sensor-card';
+      if (status === 'Safe') card.classList.add('safe');
+      else if (status === 'Moderate' || status === 'Elevated') card.classList.add('warning');
+      else if (status === 'Dangerous') card.classList.add('danger');
+    }
+
+    // Initialize charts with ThingSpeak data
+    function initializeCharts(data) {
+      if (!data || !data.feeds || data.feeds.length === 0) return;
+
+      const feeds = data.feeds;
+      const labels = feeds.map(feed => {
+        const date = new Date(feed.created_at);
+        return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+      });
+
       // Environmental Trends Chart
       const trendCtx = document.getElementById('trendChart').getContext('2d');
-      new Chart(trendCtx, {
+      if (trendChart) trendChart.destroy();
+      
+      trendChart = new Chart(trendCtx, {
         type: 'line',
         data: {
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          labels: labels,
           datasets: [
             {
-              label: 'Air Quality Index',
-              data: [65, 70, 75, 78, 72, 68, 74],
-              borderColor: '#98FB98',
-              backgroundColor: 'rgba(152, 251, 152, 0.1)',
+              label: 'Temperature (°C)',
+              data: feeds.map(feed => parseFloat(feed.field1)),
+              borderColor: '#FFA500',
+              backgroundColor: 'rgba(255, 165, 0, 0.1)',
               tension: 0.4,
               fill: true
             },
             {
-              label: 'Noise Level (dB)',
-              data: [45, 48, 42, 40, 50, 55, 42],
+              label: 'Humidity (%)',
+              data: feeds.map(feed => parseFloat(feed.field2)),
               borderColor: '#32CD32',
               backgroundColor: 'rgba(50, 205, 50, 0.1)',
               tension: 0.4,
@@ -951,27 +1150,38 @@
 
       // Gas Concentration Chart
       const gasCtx = document.getElementById('gasChart').getContext('2d');
-      new Chart(gasCtx, {
-        type: 'bar',
+      if (gasChart) gasChart.destroy();
+      
+      gasChart = new Chart(gasCtx, {
+        type: 'line',
         data: {
-          labels: ['CO', 'CO2', 'NO2', 'CH4'],
-          datasets: [{
-            label: 'Current Levels',
-            data: [2.1, 420, 48, 1.8],
-            backgroundColor: [
-              'rgba(152, 251, 152, 0.7)',
-              'rgba(50, 205, 50, 0.7)',
-              'rgba(255, 165, 0, 0.7)',
-              'rgba(46, 139, 87, 0.7)'
-            ],
-            borderColor: [
-              '#98FB98',
-              '#32CD32',
-              '#FFA500',
-              '#2E8B57'
-            ],
-            borderWidth: 1
-          }]
+          labels: labels,
+          datasets: [
+            {
+              label: 'MQ7 (CO)',
+              data: feeds.map(feed => parseFloat(feed.field3)),
+              borderColor: '#98FB98',
+              backgroundColor: 'rgba(152, 251, 152, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'MQ135 (CO2)',
+              data: feeds.map(feed => parseFloat(feed.field4)),
+              borderColor: '#32CD32',
+              backgroundColor: 'rgba(50, 205, 50, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'MQ2 (Methane)',
+              data: feeds.map(feed => parseFloat(feed.field5)),
+              borderColor: '#2E8B57',
+              backgroundColor: 'rgba(46, 139, 87, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
         },
         options: {
           responsive: true,
@@ -995,13 +1205,15 @@
 
       // Sound Analysis Chart
       const soundCtx = document.getElementById('soundChart').getContext('2d');
-      new Chart(soundCtx, {
+      if (soundChart) soundChart.destroy();
+      
+      soundChart = new Chart(soundCtx, {
         type: 'line',
         data: {
-          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+          labels: labels,
           datasets: [{
-            label: 'Noise Level (dB)',
-            data: [35, 32, 45, 52, 48, 42],
+            label: 'Sound Level (dB)',
+            data: feeds.map(feed => parseFloat(feed.field6)),
             borderColor: '#FFA500',
             backgroundColor: 'rgba(255, 165, 0, 0.1)',
             tension: 0.4,
@@ -1027,7 +1239,7 @@
           }
         }
       });
-    };
+    }
 
     // Add some interactive effects
     document.addEventListener('DOMContentLoaded', function() {
@@ -1052,7 +1264,4 @@
     });
   </script>
 </body>
-
 </html>
-
-
